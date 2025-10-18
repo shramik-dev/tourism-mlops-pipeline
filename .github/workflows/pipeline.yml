@@ -85,7 +85,7 @@ jobs:
           export HF_TOKEN=${{ secrets.HF_TOKEN }}
           export MODEL_PATH=./models/model.joblib
           export SPACE_NAME=${{ env.SPACE_NAME }}
-          python deploy_tourism_model_diagnostic.py
+          python src/deploy_tourism_model_diagnostic.py
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           SPACE_NAME: Shramik121/tourism-rf-model

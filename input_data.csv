@@ -1,4 +1,4 @@
-Age,TypeofContact,CityTier,DurationOfPitch,Occupation,Gender,NumberOfPersonVisiting,NumberOfFollowups,ProductPitched,PreferredPropertyStar,MaritalStatus,NumberOfTrips,Passport,PitchSatisfactionScore,OwnCar,NumberOfChildrenVisiting,Designation,MonthlyIncome
-37.0,Company Invited,2,9.0,Salaried,Male,4,5.0,Deluxe,3.0,Unmarried,3.0,0,3,1,1.0,Manager,22564.0
-34.0,Self Enquiry,1,21.0,Small Business,Female,4,4.0,Basic,4.0,Divorced,3.0,0,5,0,1.0,Executive,21434.0
-36.0,Self Enquiry,1,8.0,Salaried,Female,3,3.0,Basic,3.0,Married,5.0,0,5,1,0.0,Executive,17543.0
+Unnamed: 0,Age,TypeofContact,CityTier,DurationOfPitch,Occupation,Gender,NumberOfPersonVisiting,NumberOfFollowups,ProductPitched,PreferredPropertyStar,MaritalStatus,NumberOfTrips,Passport,PitchSatisfactionScore,OwnCar,NumberOfChildrenVisiting,Designation,MonthlyIncome,__index_level_0__
+673,33.0,Self Enquiry,1,6.0,Salaried,Male,3,4.0,Basic,5.0,Single,4.0,1,4,0,0.0,Executive,17799.0,539
+4548,26.0,Self Enquiry,3,10.0,Salaried,Male,4,4.0,Deluxe,5.0,Married,3.0,1,4,0,3.0,Manager,22872.0,3826
+441,42.0,Company Invited,1,11.0,Salaried,Male,3,3.0,Basic,3.0,Divorced,5.0,0,3,1,0.0,Executive,17093.0,356

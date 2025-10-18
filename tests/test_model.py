@@ -12,6 +12,5 @@ def test_columns_exists():
     assert os.path.exists(columns_path), f"Columns file not found at {columns_path}"
 
 def test_model_loads():
-    model_path = os.getenv('MODEL_PATH', 'models/model.joblib')
-    model = joblib.load(model_path)
+    model = joblib.load(os.getenv('MODEL_PATH', 'models/model.joblib'))
     assert model is not None, "Failed to load model"
