@@ -8,36 +8,57 @@ from sklearn.pipeline import Pipeline
 from datasets import load_dataset
 import os
 
+# Load the data from the Hugging Face dataset
 dataset = load_dataset("Shramik121/tourism-split-dataset")
 data = pd.DataFrame(dataset['train'])
+
+# Clean the data (same steps as in the EDA cell and data_prep)
 if 'Unnamed: 0' in data.columns:
     data = data.drop('Unnamed: 0', axis=1)
+data_clean = data.dropna()
+if 'CustomerID' in data_clean:
+    data_clean = data_clean.drop(columns=['CustomerID'])
+if 'Gender' in data_clean:
+    data_clean['Gender'] = data_clean['Gender'].replace('Fe Male', 'Female')
 
-num_cols = ['Age', 'DurationOfPitch', 'NumberOfPersonVisiting', 'NumberOfFollowups', 
-            'PreferredPropertyStar', 'NumberOfTrips', 'PitchSatisfactionScore', 
+# Define features and target
+X = data_clean.drop('ProdTaken', axis=1)
+y = data_clean['ProdTaken']
+
+# Define preprocessing steps (consistent with train.py)
+num_cols = ['Age', 'DurationOfPitch', 'NumberOfPersonVisiting', 'NumberOfFollowups',
+            'PreferredPropertyStar', 'NumberOfTrips', 'PitchSatisfactionScore',
             'NumberOfChildrenVisiting', 'MonthlyIncome']
-cat_cols = ['TypeofContact', 'Occupation', 'Gender', 'ProductPitched', 
+cat_cols = ['TypeofContact', 'Occupation', 'Gender', 'ProductPitched',
             'MaritalStatus', 'Designation', 'CityTier']
-
-data[num_cols] = data[num_cols].fillna(data[num_cols].median())
-data[cat_cols] = data[cat_cols].fillna('Unknown')
-
-X = data.drop(columns=['ProdTaken'])
-y = data['ProdTaken']
 
 preprocessor = ColumnTransformer(
     transformers=[
         ('num', StandardScaler(), num_cols),
         ('cat', OneHotEncoder(handle_unknown='ignore'), cat_cols)
-    ])
+    ],
+    remainder='passthrough'
+)
 
+# Create the full pipeline
 pipeline = Pipeline(steps=[('preprocessor', preprocessor),
                           ('classifier', RandomForestClassifier(random_state=42))])
 
+# Train the pipeline
 pipeline.fit(X, y)
 
-X_encoded = pd.get_dummies(X, columns=cat_cols, drop_first=True)
-columns = X_encoded.columns.tolist()
+# Extract and save column names AFTER preprocessing
+dummy_df = pd.DataFrame(columns=X.columns)
+preprocessor.fit(dummy_df) # Fit preprocessor to get feature names
+feature_names = []
+for name, transformer, cols in preprocessor.transformers_:
+    if hasattr(transformer, 'get_feature_names_out'):
+        feature_names.extend(transformer.get_feature_names_out(cols))
+    else:
+        feature_names.extend(cols) # Fallback for transformers without get_feature_names_out
+
+columns = feature_names
+
 os.makedirs('/content/models', exist_ok=True)
 joblib.dump(columns, '/content/models/columns.joblib')
 joblib.dump(pipeline, '/content/models/best_rf_model.joblib')
