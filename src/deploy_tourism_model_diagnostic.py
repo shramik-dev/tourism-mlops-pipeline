@@ -101,37 +101,16 @@ def load_and_save_model(model_path):
 def prepare_sample_data():
     from datasets import load_dataset
     dataset = load_dataset("Shramik121/tourism-split-dataset")
-    sample_df = pd.DataFrame(dataset['train']).sample(3)  # Use train split for consistency
+    sample_df = pd.DataFrame(dataset['test']).sample(3)
     sample_df.drop(columns=['ProdTaken'], inplace=True, errors='ignore')
     required_columns = ['Age', 'DurationOfPitch', 'NumberOfPersonVisiting', 'NumberOfFollowups', 
                        'PreferredPropertyStar', 'NumberOfTrips', 'PitchSatisfactionScore', 
                        'NumberOfChildrenVisiting', 'MonthlyIncome', 'TypeofContact', 
                        'Occupation', 'Gender', 'ProductPitched', 'MaritalStatus', 
                        'Designation', 'CityTier']
-    
-    # Validate columns
-    missing_cols = [col for col in required_columns if col not in sample_df.columns]
-    if missing_cols:
-        logging.error(f"Sample data missing columns: {missing_cols}")
-        raise ValueError(f"Sample data missing columns: {missing_cols}")
-    
-    # Ensure all required columns are present
     sample_df = sample_df[required_columns]
-    
-    # Handle missing values
-    num_cols = ['Age', 'DurationOfPitch', 'NumberOfPersonVisiting', 'NumberOfFollowups', 
-                'PreferredPropertyStar', 'NumberOfTrips', 'PitchSatisfactionScore', 
-                'NumberOfChildrenVisiting', 'MonthlyIncome']
-    cat_cols = ['TypeofContact', 'Occupation', 'Gender', 'ProductPitched', 
-                'MaritalStatus', 'Designation', 'CityTier']
-    sample_df[num_cols] = sample_df[num_cols].fillna(sample_df[num_cols].median())
-    sample_df[cat_cols] = sample_df[cat_cols].fillna('Unknown')
-    
     sample_df.to_csv("input_data.csv", index=False)
     logging.info("Input data saved to input_data.csv with required columns")
-    logging.info(f"input_data.csv columns: {list(sample_df.columns)}")
-    logging.info(f"input_data.csv head:
-{sample_df.head()}")
     return sample_df
 
 def create_hosting_script():
@@ -184,7 +163,7 @@ def predict():
         # Validate input columns
         missing_cols = [col for col in required_columns if col not in input_df.columns]
         if missing_cols:
-            error_msg = f"columns are missing: {missing_cols}"
+            error_msg = f"Missing required columns: {missing_cols}"
             logger.error(error_msg)
             return jsonify({'error': error_msg}), 400
         
@@ -199,15 +178,7 @@ def predict():
         
         # Encode input data
         input_encoded = pd.get_dummies(input_df, columns=cat_cols, drop_first=True)
-        missing_encoded_cols = [col for col in columns if col not in input_encoded.columns]
-        for col in missing_encoded_cols:
-            input_encoded[col] = 0
         input_encoded = input_encoded.reindex(columns=columns, fill_value=0)
-        
-        # Log input data for debugging
-        logger.info(f"Input encoded columns: {list(input_encoded.columns)}")
-        logger.info(f"Input encoded head:
-{input_encoded.head()}")
         
         # Make prediction
         prediction = model.predict(input_encoded)
@@ -238,16 +209,6 @@ def upload_to_huggingface(space_name):
                 logging.error(f"Required file {file} not found")
                 return False
             logging.info(f"File {file} exists")
-        
-        # Remove extraneous files from previous uploads
-        existing_files = api.list_repo_files(repo_id=space_name, repo_type="space")
-        for file in existing_files:
-            if file not in required_files:
-                try:
-                    api.delete_file(path_in_repo=file, repo_id=space_name, repo_type="space")
-                    logging.info(f"Deleted extraneous file {file} from Space")
-                except Exception as e:
-                    logging.warning(f"Failed to delete {file}: {e}")
         
         for file in required_files:
             upload_file(

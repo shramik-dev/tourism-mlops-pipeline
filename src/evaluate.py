@@ -5,25 +5,12 @@ import joblib
 import json
 from sklearn.metrics import accuracy_score
 from datasets import load_dataset
-import logging
-
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def evaluate_model():
     model = joblib.load(os.getenv('MODEL_PATH', 'models/model.joblib'))
     data = pd.DataFrame(load_dataset("Shramik121/tourism-split-dataset")['test'])
     if 'Unnamed: 0' in data.columns:
         data = data.drop('Unnamed: 0', axis=1)
-    
-    required_columns = ['Age', 'DurationOfPitch', 'NumberOfPersonVisiting', 'NumberOfFollowups', 
-                       'PreferredPropertyStar', 'NumberOfTrips', 'PitchSatisfactionScore', 
-                       'NumberOfChildrenVisiting', 'MonthlyIncome', 'TypeofContact', 
-                       'Occupation', 'Gender', 'ProductPitched', 'MaritalStatus', 
-                       'Designation', 'CityTier']
-    missing_cols = [col for col in required_columns if col not in data.columns]
-    if missing_cols:
-        logging.error(f"Test data missing columns: {missing_cols}")
-        raise ValueError(f"Test data missing columns: {missing_cols}")
     
     num_cols = ['Age', 'DurationOfPitch', 'NumberOfPersonVisiting', 'NumberOfFollowups', 
                 'PreferredPropertyStar', 'NumberOfTrips', 'PitchSatisfactionScore', 
@@ -42,7 +29,7 @@ def evaluate_model():
     results = {'accuracy': accuracy}
     with open('evaluation_results.json', 'w') as f:
         json.dump(results, f)
-    logging.info(f"Model accuracy: {accuracy}")
+    print(f"Model accuracy: {accuracy}")
 
 if __name__ == "__main__":
     evaluate_model()
