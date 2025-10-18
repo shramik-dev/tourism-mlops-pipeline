@@ -7,6 +7,8 @@ from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 import os
 from datasets import load_dataset
+import mlflow
+import mlflow.sklearn
 import logging
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -54,7 +56,21 @@ def train_model():
     columns = X_encoded.columns.tolist()
     os.makedirs('models', exist_ok=True)
     joblib.dump(columns, 'models/columns.joblib')
-    joblib.dump(pipeline, os.getenv('MODEL_OUTPUT', 'models/model.joblib'))
+    model_path = os.getenv('MODEL_OUTPUT', 'models/model.joblib')
+    joblib.dump(pipeline, model_path)
+    
+    # Log model to MLflow with input example
+    mlflow.set_tracking_uri("file://./mlruns")
+    mlflow.set_experiment("Tourism_Package_Prediction")
+    with mlflow.start_run(run_name="RandomForest"):
+        mlflow.log_params({"random_state": 42})
+        input_example = X.iloc[:1]
+        mlflow.sklearn.log_model(
+            sk_model=pipeline,
+            name="random_forest_model",
+            input_example=input_example
+        )
+        mlflow.log_artifact(model_path)
     logging.info("Model and columns saved to models/")
 
 if __name__ == "__main__":

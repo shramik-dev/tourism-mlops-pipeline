@@ -8,6 +8,8 @@ from sklearn.pipeline import Pipeline
 from datasets import load_dataset
 import os
 import logging
+import mlflow
+import mlflow.sklearn
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -53,5 +55,19 @@ X_encoded = pd.get_dummies(X, columns=cat_cols, drop_first=True)
 columns = X_encoded.columns.tolist()
 os.makedirs('/content/models', exist_ok=True)
 joblib.dump(columns, '/content/models/columns.joblib')
-joblib.dump(pipeline, '/content/models/best_rf_model.joblib')
+model_path = '/content/models/best_rf_model.joblib'
+joblib.dump(pipeline, model_path)
+
+# Log model to MLflow with input example
+mlflow.set_tracking_uri("file:///content/Tourism Package Prediction/mlruns")
+mlflow.set_experiment("Tourism_Package_Prediction")
+with mlflow.start_run(run_name="RandomForest_Colab"):
+    mlflow.log_params({"random_state": 42})
+    input_example = X.iloc[:1]
+    mlflow.sklearn.log_model(
+        sk_model=pipeline,
+        name="random_forest_model",
+        input_example=input_example
+    )
+    mlflow.log_artifact(model_path)
 logging.info("Model and columns saved to /content/models/")
