@@ -35,6 +35,7 @@ def train_model():
     else:
         data = pd.read_csv(data_path)
         print(f"Loaded data from {data_path}")
+    
     num_cols = ['Age', 'DurationOfPitch', 'NumberOfPersonVisiting', 'NumberOfFollowups',
                 'PreferredPropertyStar', 'NumberOfTrips', 'PitchSatisfactionScore',
                 'NumberOfChildrenVisiting', 'MonthlyIncome']
@@ -42,8 +43,10 @@ def train_model():
                 'MaritalStatus', 'Designation', 'CityTier']
     data[num_cols] = data[num_cols].fillna(data[num_cols].median())
     data[cat_cols] = data[cat_cols].fillna('Unknown')
+    
     X = data.drop(columns=['ProdTaken'])
     y = data['ProdTaken']
+    
     preprocessor = ColumnTransformer(
         transformers=[
             ('num', StandardScaler(), num_cols),
@@ -51,17 +54,25 @@ def train_model():
         ],
         remainder='passthrough'
     )
-    pipeline = Pipeline(steps=[('preprocessor', preprocessor),
-                              ('classifier', RandomForestClassifier(random_state=42))])
+    
+    pipeline = Pipeline(steps=[
+        ('preprocessor', preprocessor),
+        ('classifier', RandomForestClassifier(random_state=42))
+    ])
+    
+    # Fit the pipeline on the training data
     pipeline.fit(X, y)
-    dummy_df = pd.DataFrame(columns=X.columns)
-    preprocessor.fit(dummy_df)
+    
+    # Extract feature names from the fitted preprocessor
     feature_names = []
-    for name, transformer, cols in preprocessor.transformers_:
-        if hasattr(transformer, 'get_feature_names_out'):
+    for name, transformer, cols in pipeline.named_steps['preprocessor'].transformers_:
+        if name == 'remainder':
+            feature_names.extend(cols)
+        elif hasattr(transformer, 'get_feature_names_out'):
             feature_names.extend(transformer.get_feature_names_out(cols))
         else:
             feature_names.extend(cols)
+    
     columns = feature_names
     os.makedirs('models', exist_ok=True)
     joblib.dump(columns, 'models/columns.joblib')
