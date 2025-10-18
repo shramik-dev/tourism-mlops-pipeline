@@ -9,4 +9,4 @@ COPY columns.joblib .
 COPY input_data.csv .
 RUN ls -la /app
 EXPOSE 7860
-CMD ["waitress-serve", "--host=0.0.0.0", "--port=7860", "--threads=4", "--call", "app:app"]
+CMD ["waitress-serve", "--host=0.0.0.0", "--port=7860", "--threads=4", "app:app"]

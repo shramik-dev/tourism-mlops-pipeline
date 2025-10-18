@@ -1,29 +1,45 @@
 
+import os
 import pandas as pd
 import joblib
-from datasets import load_dataset
-from sklearn.metrics import accuracy_score
-import logging
-
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+import json
+from sklearn.metrics import accuracy_score, f1_score
 
 def evaluate_model():
-    model = joblib.load('models/model.joblib')
-    data = pd.DataFrame(load_dataset("Shramik121/tourism-split-dataset")['test'])
-    if 'Unnamed: 0' in data.columns:
-        data = data.drop('Unnamed: 0', axis=1)
-    num_cols = ['Age', 'DurationOfPitch', 'NumberOfPersonVisiting', 'NumberOfFollowups', 
-                'PreferredPropertyStar', 'NumberOfTrips', 'PitchSatisfactionScore', 
+    model_path = os.getenv('MODEL_PATH', 'models/model.joblib')
+    test_data_path = os.getenv('TEST_DATA', 'data/test.csv')
+    evaluation_output_path = 'evaluation_results.json'
+    if not os.path.exists(model_path):
+        print(f"Error: Model file not found at {model_path}")
+        results = {'error': f'Model file not found at {model_path}'}
+        with open(evaluation_output_path, 'w') as f:
+            json.dump(results, f)
+        return
+    if not os.path.exists(test_data_path):
+        print(f"Error: Test data file not found at {test_data_path}")
+        results = {'error': f'Test data file not found at {test_data_path}'}
+        with open(evaluation_output_path, 'w') as f:
+            json.dump(results, f)
+        return
+    model = joblib.load(model_path)
+    data = pd.read_csv(test_data_path)
+    num_cols = ['Age', 'DurationOfPitch', 'NumberOfPersonVisiting', 'NumberOfFollowups',
+                'PreferredPropertyStar', 'NumberOfTrips', 'PitchSatisfactionScore',
                 'NumberOfChildrenVisiting', 'MonthlyIncome']
-    cat_cols = ['TypeofContact', 'Occupation', 'Gender', 'ProductPitched', 
+    cat_cols = ['TypeofContact', 'Occupation', 'Gender', 'ProductPitched',
                 'MaritalStatus', 'Designation', 'CityTier']
     data[num_cols] = data[num_cols].fillna(data[num_cols].median())
     data[cat_cols] = data[cat_cols].fillna('Unknown')
-    X = data.drop(columns=['ProdTaken'])
-    y = data['ProdTaken']
-    predictions = model.predict(X)
-    accuracy = accuracy_score(y, predictions)
-    logging.info(f"Model accuracy: {accuracy}")
+    X_test = data.drop(columns=['ProdTaken'])
+    y_test = data['ProdTaken']
+    predictions = model.predict(X_test)
+    accuracy = accuracy_score(y_test, predictions)
+    f1 = f1_score(y_test, predictions)
+    results = {'accuracy': accuracy, 'f1_score': f1}
+    with open(evaluation_output_path, 'w') as f:
+        json.dump(results, f)
+    print(f"Model Accuracy: {accuracy}")
+    print(f"Model F1 Score: {f1}")
 
 if __name__ == "__main__":
     evaluate_model()
