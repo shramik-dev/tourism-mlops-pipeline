@@ -7,6 +7,9 @@ from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from datasets import load_dataset
 import os
+import logging
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 dataset = load_dataset("Shramik121/tourism-split-dataset")
 data = pd.DataFrame(dataset['train'])
@@ -41,4 +44,4 @@ columns = X_encoded.columns.tolist()
 os.makedirs('/content/models', exist_ok=True)
 joblib.dump(columns, '/content/models/columns.joblib')
 joblib.dump(pipeline, '/content/models/best_rf_model.joblib')
-print("Model and columns saved to /content/models/")
+logging.info("Model and columns saved to /content/models/")

@@ -11,6 +11,7 @@ env:
   HF_TOKEN: ${{ secrets.HF_TOKEN }}
   PYTHON_VERSION: '3.12'
   SPACE_NAME: Shramik121/tourism-rf-model
+  MLFLOW_TRACKING_URI: file://$(pwd)/mlruns
 jobs:
   ml-pipeline:
     runs-on: ubuntu-latest
@@ -30,10 +31,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install numpy==1.26.4 pandas==2.2.2 scikit-learn==1.6.1 joblib==1.4.2 dill==0.3.8 huggingface_hub==0.23.0 flask==3.0.3 waitress==3.0.0 pytest==8.3.3 mlflow==3.0.1 datasets==2.20.0
           pip install -r requirements.txt
-      - name: Create data and models directories
+      - name: Create directories
         run: |
           mkdir -p data
           mkdir -p models
+          mkdir -p mlruns
+          echo "Created directories: data, models, mlruns"
+          ls -la
       - name: Data Preparation
         run: python src/data_prep.py
         env:

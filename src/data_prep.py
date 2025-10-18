@@ -2,6 +2,9 @@
 import pandas as pd
 from datasets import load_dataset
 import os
+import logging
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def prepare_data():
     dataset = load_dataset("Shramik121/tourism-split-dataset")
@@ -16,7 +19,7 @@ def prepare_data():
     os.makedirs('data', exist_ok=True)
     data.to_csv('data/processed.csv', index=False)
     data.to_csv('data/test.csv', index=False)
-    print("Data prepared and saved to data/processed.csv and data/test.csv")
+    logging.info("Data prepared and saved to data/processed.csv and data/test.csv")
 
 if __name__ == "__main__":
     prepare_data()
