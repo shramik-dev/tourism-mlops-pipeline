@@ -41,11 +41,9 @@ def health():
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
-        # Get raw JSON data
         data = request.get_json(force=True, silent=False)
         logger.info(f"Raw input JSON: {json.dumps(data)}")
         
-        # Handle single dict or list of dicts
         if isinstance(data, dict):
             input_data = [data]
         elif isinstance(data, list):
@@ -55,41 +53,29 @@ def predict():
             logger.error(error_msg)
             return jsonify({'error': error_msg}), 400
 
-        # Create DataFrame with explicit column validation
-        try:
-            input_df = pd.DataFrame(input_data)
-        except Exception as e:
-            logger.error(f"Failed to create DataFrame: {e}")
-            return jsonify({'error': f"Failed to create DataFrame: {str(e)}"}), 400
+        input_df = pd.DataFrame(input_data)
         logger.info(f"Input DataFrame columns: {list(input_df.columns)}")
         
-        # Validate columns
-        missing_cols = [col for col in required_columns if col not in input_df.columns]
-        if missing_cols:
-            error_msg = f"Missing required columns: {missing_cols}"
-            logger.error(error_msg)
-            return jsonify({'error': error_msg}), 400
-
-        # Handle missing values
         num_cols = ['Age', 'DurationOfPitch', 'NumberOfPersonVisiting', 'NumberOfFollowups', 
                     'PreferredPropertyStar', 'NumberOfTrips', 'PitchSatisfactionScore', 
                     'NumberOfChildrenVisiting', 'MonthlyIncome']
         cat_cols = ['TypeofContact', 'Occupation', 'Gender', 'ProductPitched', 
                     'MaritalStatus', 'Designation', 'CityTier']
+        
+        for col in required_columns:
+            if col not in input_df.columns:
+                input_df[col] = 0.0 if col in num_cols else 'Unknown'
+                logger.warning(f"Added missing column {col} with default value")
+        
         input_df[num_cols] = input_df[num_cols].astype(float).fillna(input_df[num_cols].median())
         input_df[cat_cols] = input_df[cat_cols].fillna('Unknown')
         
-        # Encode input data
         input_encoded = pd.get_dummies(input_df, columns=cat_cols, drop_first=True)
-        logger.info(f"Encoded DataFrame columns: {list(input_encoded.columns)}")
-        
-        # Ensure all expected columns are present
-        missing_encoded_cols = [col for col in columns if col not in input_encoded.columns]
-        for col in missing_encoded_cols:
-            input_encoded[col] = 0
+        for col in columns:
+            if col not in input_encoded.columns:
+                input_encoded[col] = 0
         input_encoded = input_encoded.reindex(columns=columns, fill_value=0)
         
-        # Make prediction
         prediction = model.predict(input_encoded)
         logger.info(f"Prediction made: {prediction.tolist()}")
         return jsonify({'prediction': prediction.tolist()})

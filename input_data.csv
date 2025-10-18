@@ -1,4 +1,4 @@
 Age,DurationOfPitch,NumberOfPersonVisiting,NumberOfFollowups,PreferredPropertyStar,NumberOfTrips,PitchSatisfactionScore,NumberOfChildrenVisiting,MonthlyIncome,TypeofContact,Occupation,Gender,ProductPitched,MaritalStatus,Designation,CityTier
-31.0,12.0,3,4.0,3.0,4.0,4,2.0,28097.0,Self Enquiry,Salaried,Female,Standard,Married,Senior Manager,3
-28.0,9.0,3,4.0,3.0,2.0,5,1.0,22905.0,Self Enquiry,Salaried,Female,Deluxe,Married,Manager,1
-55.0,8.0,2,3.0,3.0,5.0,1,0.0,20160.0,Self Enquiry,Small Business,Male,Deluxe,Single,Manager,3
+28.0,19.0,2,3.0,3.0,4.0,5,1.0,24854.0,Self Enquiry,Small Business,Female,Deluxe,Unmarried,Manager,3
+54.0,31.0,4,4.0,5.0,8.0,3,3.0,29126.0,Self Enquiry,Salaried,Male,Standard,Single,Senior Manager,3
+43.0,12.0,2,4.0,3.0,1.0,3,1.0,34392.0,Self Enquiry,Small Business,Female,King,Married,VP,1
