@@ -2,116 +2,35 @@
 name: MLOps Pipeline
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
 env:
-  HF_TOKEN: ${{ secrets.HF_TOKEN }}
   PYTHON_VERSION: '3.12'
   SPACE_NAME: Shramik121/tourism-rf-model
-  MLFLOW_TRACKING_URI: file://$(pwd)/mlruns
 jobs:
   ml-pipeline:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-      checks: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install numpy==1.26.4 pandas==2.2.2 scikit-learn==1.6.1 joblib==1.4.2 dill==0.3.8 huggingface_hub==0.23.0 flask==3.0.3 waitress==3.0.0 pytest==8.3.3 mlflow==3.0.1 datasets==2.20.0
-          pip install -r requirements.txt
+          pip install numpy==1.26.4 pandas==2.2.2 scikit-learn==1.6.1 joblib==1.4.2 dill==0.3.8 huggingface_hub==0.23.0 flask==3.0.3 waitress==3.0.0 pytest==8.3.3 datasets==2.20.0
       - name: Create directories
-        run: |
-          mkdir -p data
-          mkdir -p models
-          mkdir -p mlruns
-          echo "Created directories: data, models, mlruns"
-          ls -la
+        run: mkdir -p data models
       - name: Data Preparation
         run: python src/data_prep.py
-        env:
-          OUTPUT_DIR: ./data
-      - name: Verify Data File
-        run: |
-          if [ ! -f data/processed.csv ]; then
-            echo "Error: data/processed.csv not found!"
-            exit 1
-          fi
-          echo "Data file exists. Content preview:"
-          head -n 5 data/processed.csv
       - name: Model Training
         run: python src/train.py
-        env:
-          MODEL_OUTPUT: ./models/model.joblib
-          DATA_PATH: ./data/processed.csv
-      - name: Verify Model and Columns Files
-        run: |
-          if [ ! -f models/model.joblib ]; then
-            echo "Error: models/model.joblib not found!"
-            exit 1
-          fi
-          if [ ! -f models/columns.joblib ]; then
-            echo "Error: models/columns.joblib not found!"
-            exit 1
-          fi
-          echo "Model and columns files exist."
       - name: Model Evaluation
-        id: eval
         run: python src/evaluate.py
-        env:
-          MODEL_PATH: ./models/model.joblib
-          TEST_DATA: ./data/test.csv
       - name: Run Tests
         run: pytest tests/ --verbose
-        env:
-          MODEL_PATH: ./models/model.joblib
-      - name: Upload Model Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: trained-model
-          path: |
-            ./models/model.joblib
-            ./models/columns.joblib
-      - name: Deploy to Hugging Face Space
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: |
-          export HF_TOKEN=${{ secrets.HF_TOKEN }}
-          export MODEL_PATH=./models/model.joblib
-          export SPACE_NAME=${{ env.SPACE_NAME }}
-          python src/deploy_tourism_model_diagnostic.py
+      - name: Deploy to Hugging Face
+        run: python src/deploy.py
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          SPACE_NAME: Shramik121/tourism-rf-model
-      - name: Log Metrics to PR/Run Summary
-        if: always()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            let eval_output = 'No evaluation results available';
-            try {
-              eval_output = fs.readFileSync('./evaluation_results.json', 'utf8');
-            } catch (error) {
-              console.warn('evaluation_results.json not found.');
-            }
-            const summary = `## ML Pipeline Results\n${eval_output}`;
-            github.rest.checks.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              name: 'MLOps Pipeline',
-              head_sha: context.sha,
-              status: 'completed',
-              conclusion: '${{ job.status }}',
-              output: { title: 'Evaluation Metrics', summary }
-            });

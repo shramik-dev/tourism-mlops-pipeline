@@ -18,8 +18,7 @@ def prepare_data():
         data['Gender'] = data['Gender'].replace('Fe Male', 'Female')
     os.makedirs('data', exist_ok=True)
     data.to_csv('data/processed.csv', index=False)
-    data.to_csv('data/test.csv', index=False)
-    logging.info("Data prepared and saved to data/processed.csv and data/test.csv")
+    logging.info("Data prepared and saved to data/processed.csv")
 
 if __name__ == "__main__":
     prepare_data()
