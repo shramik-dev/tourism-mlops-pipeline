@@ -11,10 +11,19 @@ def prepare_data():
     data = pd.DataFrame(dataset['train'])
     if 'Unnamed: 0' in data.columns:
         data = data.drop('Unnamed: 0', axis=1)
+    required_columns = ['Age', 'DurationOfPitch', 'NumberOfPersonVisiting', 'NumberOfFollowups', 
+                       'PreferredPropertyStar', 'NumberOfTrips', 'PitchSatisfactionScore', 
+                       'NumberOfChildrenVisiting', 'MonthlyIncome', 'TypeofContact', 
+                       'Occupation', 'Gender', 'ProductPitched', 'MaritalStatus', 
+                       'Designation', 'CityTier']
+    missing_cols = [col for col in required_columns if col not in data.columns]
+    if missing_cols:
+        logging.error(f"Training data missing columns: {missing_cols}")
+        raise ValueError(f"Training data missing columns: {missing_cols}")
     data = data.dropna()
-    if 'CustomerID' in data.columns: # Check if CustomerID exists before dropping
+    if 'CustomerID' in data:
         data = data.drop('CustomerID', axis=1)
-    if 'Gender' in data.columns: # Check if Gender exists before replacing
+    if 'Gender' in data:
         data['Gender'] = data['Gender'].replace('Fe Male', 'Female')
     os.makedirs('data', exist_ok=True)
     data.to_csv('data/processed.csv', index=False)

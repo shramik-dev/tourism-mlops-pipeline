@@ -17,7 +17,6 @@ def test_columns_exists():
     logging.info(f"Columns file exists at {columns_path}")
 
 def test_model_loads():
-    model_path = os.getenv('MODEL_PATH', 'models/model.joblib')
-    model = joblib.load(model_path)
+    model = joblib.load(os.getenv('MODEL_PATH', 'models/model.joblib'))
     assert model is not None, "Failed to load model"
     logging.info("Model loaded successfully")

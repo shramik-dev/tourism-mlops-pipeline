@@ -74,7 +74,7 @@ def load_and_save_model(model_path):
     colab_model_path = "/content/models/best_rf_model.joblib"
     colab_columns_path = "/content/models/columns.joblib"
     model_path = model_path or default_model_path
-
+    
     if os.path.exists(colab_model_path) and os.path.abspath(colab_model_path) != os.path.abspath(default_model_path):
         shutil.copy(colab_model_path, default_model_path)
         logging.info(f"Model copied from {colab_model_path} to {default_model_path}")
@@ -83,7 +83,7 @@ def load_and_save_model(model_path):
     else:
         logging.error(f"Model not found at {colab_model_path} or {model_path}")
         return False
-
+    
     if os.path.exists(colab_columns_path) and os.path.abspath(colab_columns_path) != os.path.abspath(default_columns_path):
         shutil.copy(colab_columns_path, default_columns_path)
         logging.info(f"Columns copied from {colab_columns_path} to {default_columns_path}")
@@ -92,7 +92,7 @@ def load_and_save_model(model_path):
     else:
         logging.error(f"Columns file not found at {colab_columns_path} or {default_columns_path}")
         return False
-
+    
     if not os.path.exists(default_model_path) or not os.path.exists(default_columns_path):
         logging.error("Model or columns files not found in deployment directory")
         return False
@@ -102,31 +102,31 @@ def prepare_sample_data():
     from datasets import load_dataset
     dataset = load_dataset("Shramik121/tourism-split-dataset")
     sample_df = pd.DataFrame(dataset['train']).sample(3)  # Use train split for consistency
-    sample_df.drop(columns=['ProdTaken', 'Unnamed: 0', '__index_level_0__'], inplace=True, errors='ignore')
-    required_columns = ['Age', 'DurationOfPitch', 'NumberOfPersonVisiting', 'NumberOfFollowups',
-                       'PreferredPropertyStar', 'NumberOfTrips', 'PitchSatisfactionScore',
-                       'NumberOfChildrenVisiting', 'MonthlyIncome', 'TypeofContact',
-                       'Occupation', 'Gender', 'ProductPitched', 'MaritalStatus',
+    sample_df.drop(columns=['ProdTaken'], inplace=True, errors='ignore')
+    required_columns = ['Age', 'DurationOfPitch', 'NumberOfPersonVisiting', 'NumberOfFollowups', 
+                       'PreferredPropertyStar', 'NumberOfTrips', 'PitchSatisfactionScore', 
+                       'NumberOfChildrenVisiting', 'MonthlyIncome', 'TypeofContact', 
+                       'Occupation', 'Gender', 'ProductPitched', 'MaritalStatus', 
                        'Designation', 'CityTier']
-
+    
     # Validate columns
     missing_cols = [col for col in required_columns if col not in sample_df.columns]
     if missing_cols:
         logging.error(f"Sample data missing columns: {missing_cols}")
         raise ValueError(f"Sample data missing columns: {missing_cols}")
-
+    
     # Ensure all required columns are present
     sample_df = sample_df[required_columns]
-
+    
     # Handle missing values
-    num_cols = ['Age', 'DurationOfPitch', 'NumberOfPersonVisiting', 'NumberOfFollowups',
-                'PreferredPropertyStar', 'NumberOfTrips', 'PitchSatisfactionScore',
+    num_cols = ['Age', 'DurationOfPitch', 'NumberOfPersonVisiting', 'NumberOfFollowups', 
+                'PreferredPropertyStar', 'NumberOfTrips', 'PitchSatisfactionScore', 
                 'NumberOfChildrenVisiting', 'MonthlyIncome']
-    cat_cols = ['TypeofContact', 'Occupation', 'Gender', 'ProductPitched',
+    cat_cols = ['TypeofContact', 'Occupation', 'Gender', 'ProductPitched', 
                 'MaritalStatus', 'Designation', 'CityTier']
     sample_df[num_cols] = sample_df[num_cols].fillna(sample_df[num_cols].median())
     sample_df[cat_cols] = sample_df[cat_cols].fillna('Unknown')
-
+    
     sample_df.to_csv("input_data.csv", index=False)
     logging.info("Input data saved to input_data.csv with required columns")
     logging.info(f"input_data.csv columns: {list(sample_df.columns)}")
@@ -158,10 +158,10 @@ except Exception as e:
     logger.error(f"Failed to load model or columns: {e}")
     raise
 
-required_columns = ['Age', 'DurationOfPitch', 'NumberOfPersonVisiting', 'NumberOfFollowups',
-                   'PreferredPropertyStar', 'NumberOfTrips', 'PitchSatisfactionScore',
-                   'NumberOfChildrenVisiting', 'MonthlyIncome', 'TypeofContact',
-                   'Occupation', 'Gender', 'ProductPitched', 'MaritalStatus',
+required_columns = ['Age', 'DurationOfPitch', 'NumberOfPersonVisiting', 'NumberOfFollowups', 
+                   'PreferredPropertyStar', 'NumberOfTrips', 'PitchSatisfactionScore', 
+                   'NumberOfChildrenVisiting', 'MonthlyIncome', 'TypeofContact', 
+                   'Occupation', 'Gender', 'ProductPitched', 'MaritalStatus', 
                    'Designation', 'CityTier']
 
 @app.route('/', methods=['GET'])
@@ -180,30 +180,35 @@ def predict():
         data = request.get_json(force=True)
         logger.info(f"Predict endpoint called with data: {data}")
         input_df = pd.DataFrame(data)
-
+        
         # Validate input columns
         missing_cols = [col for col in required_columns if col not in input_df.columns]
         if missing_cols:
             error_msg = f"columns are missing: {missing_cols}"
             logger.error(error_msg)
             return jsonify({'error': error_msg}), 400
-
+        
         # Handle missing values
-        num_cols = ['Age', 'DurationOfPitch', 'NumberOfPersonVisiting', 'NumberOfFollowups',
-                    'PreferredPropertyStar', 'NumberOfTrips', 'PitchSatisfactionScore',
+        num_cols = ['Age', 'DurationOfPitch', 'NumberOfPersonVisiting', 'NumberOfFollowups', 
+                    'PreferredPropertyStar', 'NumberOfTrips', 'PitchSatisfactionScore', 
                     'NumberOfChildrenVisiting', 'MonthlyIncome']
-        cat_cols = ['TypeofContact', 'Occupation', 'Gender', 'ProductPitched',
+        cat_cols = ['TypeofContact', 'Occupation', 'Gender', 'ProductPitched', 
                     'MaritalStatus', 'Designation', 'CityTier']
         input_df[num_cols] = input_df[num_cols].fillna(input_df[num_cols].median())
         input_df[cat_cols] = input_df[cat_cols].fillna('Unknown')
-
+        
         # Encode input data
         input_encoded = pd.get_dummies(input_df, columns=cat_cols, drop_first=True)
         missing_encoded_cols = [col for col in columns if col not in input_encoded.columns]
         for col in missing_encoded_cols:
             input_encoded[col] = 0
         input_encoded = input_encoded.reindex(columns=columns, fill_value=0)
-
+        
+        # Log input data for debugging
+        logger.info(f"Input encoded columns: {list(input_encoded.columns)}")
+        logger.info(f"Input encoded head:
+{input_encoded.head()}")
+        
         # Make prediction
         prediction = model.predict(input_encoded)
         logger.info(f"Prediction made: {prediction.tolist()}")
@@ -226,14 +231,14 @@ def upload_to_huggingface(space_name):
         api = HfApi()
         api.create_repo(repo_id=space_name, repo_type="space", space_sdk="docker", private=False, exist_ok=True)
         logging.info(f"Created or verified Space: {space_name}")
-
+        
         required_files = ['app.py', 'model.joblib', 'columns.joblib', 'input_data.csv', 'requirements.txt', 'Dockerfile']
         for file in required_files:
             if not os.path.exists(file):
                 logging.error(f"Required file {file} not found")
                 return False
             logging.info(f"File {file} exists")
-
+        
         # Remove extraneous files from previous uploads
         existing_files = api.list_repo_files(repo_id=space_name, repo_type="space")
         for file in existing_files:
@@ -243,8 +248,7 @@ def upload_to_huggingface(space_name):
                     logging.info(f"Deleted extraneous file {file} from Space")
                 except Exception as e:
                     logging.warning(f"Failed to delete {file}: {e}")
-
-
+        
         for file in required_files:
             upload_file(
                 path_or_fileobj=file,
@@ -254,7 +258,7 @@ def upload_to_huggingface(space_name):
                 commit_message=f"Upload {file} to Hugging Face Space"
             )
             logging.info(f"Uploaded {file} to {space_name}")
-
+        
         logging.info(f"Successfully uploaded files to https://huggingface.co/spaces/{space_name}")
         return True
     except Exception as e:
